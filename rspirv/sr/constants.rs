@@ -42,40 +42,35 @@ pub(in crate::sr) enum ConstantEnum {
 impl Constant {
     pub fn is_bool_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::Bool { .. } |
-            ConstantEnum::SpecBool { .. } => true,
+            ConstantEnum::Bool { .. } | ConstantEnum::SpecBool { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_i32_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::I32 { .. } |
-            ConstantEnum::SpecI32 { .. } => true,
+            ConstantEnum::I32 { .. } | ConstantEnum::SpecI32 { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_u32_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::U32 { .. } |
-            ConstantEnum::SpecU32 { .. } => true,
+            ConstantEnum::U32 { .. } | ConstantEnum::SpecU32 { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_f32_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::F32 { .. } |
-            ConstantEnum::SpecF32 { .. } => true,
+            ConstantEnum::F32 { .. } | ConstantEnum::SpecF32 { .. } => true,
             _ => false,
         }
     }
 
     pub fn is_composite_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::Composite { .. } |
-            ConstantEnum::SpecComposite { .. } => true,
+            ConstantEnum::Composite { .. } | ConstantEnum::SpecComposite { .. } => true,
             _ => false,
         }
     }
@@ -96,12 +91,12 @@ impl Constant {
 
     pub fn is_spec_constant(&self) -> bool {
         match self.c {
-            ConstantEnum::SpecBool { .. } |
-            ConstantEnum::SpecI32 { .. } |
-            ConstantEnum::SpecU32 { .. } |
-            ConstantEnum::SpecF32 { .. } |
-            ConstantEnum::SpecComposite { .. } |
-            ConstantEnum::SpecOp { .. } => true,
+            ConstantEnum::SpecBool { .. }
+            | ConstantEnum::SpecI32 { .. }
+            | ConstantEnum::SpecU32 { .. }
+            | ConstantEnum::SpecF32 { .. }
+            | ConstantEnum::SpecComposite { .. }
+            | ConstantEnum::SpecOp { .. } => true,
             _ => false,
         }
     }

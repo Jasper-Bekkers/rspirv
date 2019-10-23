@@ -67,29 +67,22 @@ impl OperandTokens {
                 quote! { spirv::Word },
                 quote! { *value },
             ),
-            "LiteralInteger" | "LiteralExtInstInteger" => (
-                quote! { u32 },
-                quote! { *value },
-            ),
-            "LiteralSpecConstantOpInteger" => (
-                quote! { spirv::Op },
-                quote! { *value },
-            ),
-            "LiteralContextDependentNumber" => panic!("this kind is not expected to be handled here"),
-            "LiteralString" => (
-                quote! { String },
-                quote! { value.clone() },
-            ),
+            "LiteralInteger" | "LiteralExtInstInteger" => (quote! { u32 }, quote! { *value }),
+            "LiteralSpecConstantOpInteger" => (quote! { spirv::Op }, quote! { *value }),
+            "LiteralContextDependentNumber" => {
+                panic!("this kind is not expected to be handled here")
+            }
+            "LiteralString" => (quote! { String }, quote! { value.clone() }),
             "PairLiteralIntegerIdRef" => (
                 //TODO: proper `Token<>`
                 quote! { (u32, spirv::Word) },
                 quote! {
-                   match (#iter.next(), #iter.next()) {
-                       (Some(&dr::Operand::LiteralInt32(value)), Some(&dr::Operand::IdRef(id))) => Some((value, Token::new(id))),
-                       (None, None) => None,
-                       _ => Err(OperandError::WrongType)?,
-                   }
-               },
+                    match (#iter.next(), #iter.next()) {
+                        (Some(&dr::Operand::LiteralInt32(value)), Some(&dr::Operand::IdRef(id))) => Some((value, Token::new(id))),
+                        (None, None) => None,
+                        _ => Err(OperandError::WrongType)?,
+                    }
+                },
             ),
             "PairIdRefLiteralInteger" => (
                 //TODO: proper `Token<>`
@@ -115,10 +108,7 @@ impl OperandTokens {
             ),
             kind => {
                 let kind = Ident::new(kind, Span::call_site());
-                (
-                    quote! { spirv::#kind },
-                    quote! { *value },
-                )
+                (quote! { spirv::#kind }, quote! { *value })
             }
         };
 
@@ -138,10 +128,7 @@ impl OperandTokens {
                     (#lift).ok_or(OperandError::Missing)?
                 },
             ),
-            structs::Quantifier::ZeroOrOne => (
-                quote! { Option<#ty> },
-                lift
-            ),
+            structs::Quantifier::ZeroOrOne => (quote! { Option<#ty> }, lift),
             structs::Quantifier::ZeroOrMore => (
                 quote! { Vec<#ty> },
                 quote! {{
@@ -194,7 +181,7 @@ pub fn gen_sr_code_from_operand_kind_grammar(
                 .map(|p| OperandTokens::new(p).quantified_type)
                 .collect();
             let params = if types.is_empty() {
-                quote!{}
+                quote! {}
             } else {
                 quote! { (#( #types ),*) }
             };
@@ -229,9 +216,7 @@ const TYPE_PREFIX_LENGTH: usize = 6;
 /// List of type instructions (prefixed by "OpType") that
 /// are represented by individual structs as opposed to variants
 /// of a big enum.
-const STANDALONE_TYPES: &[&str] = &[
-    "Function",
-];
+const STANDALONE_TYPES: &[&str] = &["Function"];
 
 pub fn gen_sr_code_from_instruction_grammar(
     grammar_instructions: &[structs::Instruction],
@@ -254,10 +239,11 @@ pub fn gen_sr_code_from_instruction_grammar(
     // Compose the token stream for all instructions
     for inst in grammar_instructions
         .iter() // Loop over all instructions
-        .filter(|i| i.class != Some(structs::Class::Constant)) // Skip constants
+        .filter(|i| i.class != Some(structs::Class::Constant))
+    // Skip constants
     {
         // Get the token for its enumerant
-        let inst_name = &inst.opname[2..];
+        let inst_name = &inst.opname[2 ..];
         let name_ident = Ident::new(inst_name, Span::call_site());
         let type_name = if inst.opname.len() > TYPE_PREFIX_LENGTH {
             &inst.opname[TYPE_PREFIX_LENGTH ..]
@@ -275,7 +261,7 @@ pub fn gen_sr_code_from_instruction_grammar(
         // Compose the token stream for all parameters
         for operand in inst.operands.iter() {
             if operand.kind.starts_with("IdResult") {
-                continue
+                continue;
             }
             let tokens = OperandTokens::new(operand);
             field_names.push(tokens.name);
@@ -322,7 +308,7 @@ pub fn gen_sr_code_from_instruction_grammar(
             }
             Some(structs::Class::Type) => {
                 type_variants.push(if field_names.is_empty() {
-                    quote!{ #type_ident }
+                    quote! { #type_ident }
                 } else {
                     quote! { #type_ident {
                         #( #field_names: #field_types ),*
@@ -337,7 +323,7 @@ pub fn gen_sr_code_from_instruction_grammar(
                     );
                     // If the type requires parameters, attach `{ .. }` to the match arm.
                     let check_params = if field_names.is_empty() {
-                        quote!{}
+                        quote! {}
                     } else {
                         quote! { {..} }
                     };
@@ -357,7 +343,7 @@ pub fn gen_sr_code_from_instruction_grammar(
                         Span::call_site(),
                     );
                     let init_list = if field_names.is_empty() {
-                        quote!{}
+                        quote! {}
                     } else {
                         quote! { {#( #field_names ),*} }
                     };
@@ -373,9 +359,7 @@ pub fn gen_sr_code_from_instruction_grammar(
                     });
                 }
             }
-            Some(ModeSetting) |
-            Some(ExtensionDecl) |
-            Some(FunctionStruct) => {
+            Some(ModeSetting) | Some(ExtensionDecl) | Some(FunctionStruct) => {
                 // Create a standalone struct
                 inst_structs.push(quote! {
                     #[derive(Clone, Debug, Eq, PartialEq)]
@@ -409,7 +393,7 @@ pub fn gen_sr_code_from_instruction_grammar(
             }
             _ => {
                 op_variants.push(if field_names.is_empty() {
-                    quote!{ #name_ident }
+                    quote! { #name_ident }
                 } else {
                     quote! { #name_ident {
                         #( #field_names: #field_types ),*
@@ -464,4 +448,3 @@ pub fn gen_sr_code_from_instruction_grammar(
         context_logic: context_logic.to_string(),
     }
 }
-

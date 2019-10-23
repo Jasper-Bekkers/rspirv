@@ -97,8 +97,8 @@
 extern crate spirv_headers as spirv;
 
 pub mod binary;
-pub mod grammar;
 pub mod dr;
+pub mod grammar;
 pub mod sr;
 
 mod utils;

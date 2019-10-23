@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::{
-    collections::HashMap,
-    hash::BuildHasherDefault,
-    marker::PhantomData,
-};
+use std::{collections::HashMap, hash::BuildHasherDefault, marker::PhantomData};
 
 use fxhash::FxHasher;
 use spirv;
 
 use crate::{
     dr,
-    sr::{instructions, InstructionError, OperandError},
     sr::constants::{Constant, ConstantEnum},
-    sr::types::{self, TypeEnum, Type},
+    sr::types::{self, Type, TypeEnum},
+    sr::{instructions, InstructionError, OperandError},
 };
 
 type FastHashMap<K, V> = HashMap<K, V, BuildHasherDefault<FxHasher>>;
@@ -121,7 +117,10 @@ impl<T> Storage<T> {
     /// Adds a value with a check for uniqueness: returns a token pointing to
     /// an existing element if its value matches the given one, or adds a new
     /// element otherwise.
-    pub fn fetch_or_append(&mut self, value: T) -> Token<T> where T: PartialEq {
+    pub fn fetch_or_append(&mut self, value: T) -> Token<T>
+    where
+        T: PartialEq,
+    {
         if let Some(index) = self.data.iter().position(|d| d == &value) {
             Token::new(index as Index)
         } else {
@@ -181,32 +180,44 @@ impl Context {
 
 impl Context {
     pub fn constant_bool(&mut self, val: bool) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::Bool(val) };
+        let v = Constant {
+            c: ConstantEnum::Bool(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn constant_i32(&mut self, val: i32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::I32(val) };
+        let v = Constant {
+            c: ConstantEnum::I32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn constant_u32(&mut self, val: u32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::U32(val) };
+        let v = Constant {
+            c: ConstantEnum::U32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn constant_f32(&mut self, val: f32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::F32(val) };
+        let v = Constant {
+            c: ConstantEnum::F32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn constant_composite<T: AsRef<[Token<Constant>]>>(&mut self, val: T) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::Composite(val.as_ref().to_vec()) };
+        let v = Constant {
+            c: ConstantEnum::Composite(val.as_ref().to_vec()),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn constant_null(&mut self, val: Token<Type>) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::Null(val) };
+        let v = Constant {
+            c: ConstantEnum::Null(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
@@ -216,32 +227,47 @@ impl Context {
         param: u32,
         filter_mode: spirv::SamplerFilterMode,
     ) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::Sampler(addressing_mode, param, filter_mode) };
+        let v = Constant {
+            c: ConstantEnum::Sampler(addressing_mode, param, filter_mode),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn spec_constant_bool(&mut self, val: bool) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecBool(val) };
+        let v = Constant {
+            c: ConstantEnum::SpecBool(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn spec_constant_i32(&mut self, val: i32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecI32(val) };
+        let v = Constant {
+            c: ConstantEnum::SpecI32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn spec_constant_u32(&mut self, val: u32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecU32(val) };
+        let v = Constant {
+            c: ConstantEnum::SpecU32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
     pub fn spec_constant_f32(&mut self, val: f32) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecF32(val) };
+        let v = Constant {
+            c: ConstantEnum::SpecF32(val),
+        };
         self.constants.fetch_or_append(v)
     }
 
-    pub fn spec_constant_composite<T: AsRef<[Token<Constant>]>>(&mut self, val: T) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecComposite(val.as_ref().to_vec()) };
+    pub fn spec_constant_composite<T: AsRef<[Token<Constant>]>>(
+        &mut self,
+        val: T,
+    ) -> Token<Constant> {
+        let v = Constant {
+            c: ConstantEnum::SpecComposite(val.as_ref().to_vec()),
+        };
         self.constants.fetch_or_append(v)
     }
 
@@ -250,7 +276,9 @@ impl Context {
         op: spirv::Op,
         operands: T,
     ) -> Token<Constant> {
-        let v = Constant { c: ConstantEnum::SpecOp(op, operands.as_ref().to_vec()) };
+        let v = Constant {
+            c: ConstantEnum::SpecOp(op, operands.as_ref().to_vec()),
+        };
         self.constants.fetch_or_append(v)
     }
 }

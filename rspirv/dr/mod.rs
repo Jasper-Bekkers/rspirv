@@ -37,7 +37,7 @@
 pub use self::build::Builder;
 pub use self::constructs::{BasicBlock, Function, Instruction};
 pub use self::constructs::{Module, ModuleHeader, Operand};
-pub use self::loader::{Error, load_bytes, load_words, Loader};
+pub use self::loader::{load_bytes, load_words, Error, Loader};
 
 mod build;
 mod constructs;

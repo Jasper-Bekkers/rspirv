@@ -13,7 +13,6 @@
 // limitations under the License.
 
 /// Rust structs for deserializing the SPIR-V JSON grammar.
-
 use serde::de;
 use serde_derive::*;
 use std::{convert::TryInto, fmt, result, str};
@@ -94,7 +93,7 @@ fn num_or_hex<'de, D: de::Deserializer<'de>>(d: D) -> result::Result<u32, D::Err
         }
 
         fn visit_str<E: de::Error>(self, value: &str) -> result::Result<Self::Value, E> {
-            Ok(u32::from_str_radix(&value[2..], 16).unwrap())
+            Ok(u32::from_str_radix(&value[2 ..], 16).unwrap())
         }
 
         fn visit_u64<E: de::Error>(self, value: u64) -> result::Result<Self::Value, E> {
@@ -107,11 +106,11 @@ fn num_or_hex<'de, D: de::Deserializer<'de>>(d: D) -> result::Result<u32, D::Err
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 pub enum Quantifier {
-    #[serde(rename="")]
+    #[serde(rename = "")]
     One,
-    #[serde(rename="?")]
+    #[serde(rename = "?")]
     ZeroOrOne,
-    #[serde(rename="*")]
+    #[serde(rename = "*")]
     ZeroOrMore,
 }
 

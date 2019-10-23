@@ -27,11 +27,10 @@ impl Disassemble for dr::ModuleHeader {
     fn disassemble(&self) -> String {
         let (major, minor) = self.version();
         let (vendor, _) = self.generator();
-        format!("; SPIR-V\n; Version: {}.{}\n; Generator: {}\n; Bound: {}",
-                major,
-                minor,
-                vendor,
-                self.bound)
+        format!(
+            "; SPIR-V\n; Version: {}.{}\n; Generator: {}\n; Bound: {}",
+            major, minor, vendor, self.bound
+        )
     }
 }
 
@@ -40,9 +39,9 @@ include!("autogen_disas_operand.rs");
 impl Disassemble for dr::Operand {
     fn disassemble(&self) -> String {
         match *self {
-            dr::Operand::IdMemorySemantics(v) |
-            dr::Operand::IdScope(v) |
-            dr::Operand::IdRef(v) => format!("%{}", v),
+            dr::Operand::IdMemorySemantics(v) | dr::Operand::IdScope(v) | dr::Operand::IdRef(v) => {
+                format!("%{}", v)
+            }
             dr::Operand::ImageOperands(v) => v.disassemble(),
             dr::Operand::FPFastMathMode(v) => v.disassemble(),
             dr::Operand::SelectionControl(v) => v.disassemble(),
@@ -59,38 +58,42 @@ impl Disassemble for dr::Operand {
 /// Disassembles each instruction in `insts` and joins them together
 /// with the given `delimiter`.
 fn disas_join<T: Disassemble>(insts: &[T], delimiter: &str) -> String {
-    insts.iter()
-         .map(|i| i.disassemble())
-         .collect::<Vec<String>>()
-         .join(delimiter)
+    insts
+        .iter()
+        .map(|i| i.disassemble())
+        .collect::<Vec<String>>()
+        .join(delimiter)
 }
 
 impl Disassemble for dr::Instruction {
     fn disassemble(&self) -> String {
-        format!("{rid}{opcode}{rtype}{space}{operands}",
-                rid = self.result_id
-                          .map_or(String::new(), |w| format!("%{} = ", w)),
-                opcode = format!("Op{}", self.class.opname),
-                // extra space both before and after the reseult type
-                rtype = self.result_type
-                            .map_or(String::new(), |w| format!("  %{} ", w)),
-                space = if !self.operands.is_empty() {
-                    " "
-                } else {
-                    ""
-                },
-                operands = disas_join(&self.operands, " "))
+        format!(
+            "{rid}{opcode}{rtype}{space}{operands}",
+            rid = self
+                .result_id
+                .map_or(String::new(), |w| format!("%{} = ", w)),
+            opcode = format!("Op{}", self.class.opname),
+            // extra space both before and after the reseult type
+            rtype = self
+                .result_type
+                .map_or(String::new(), |w| format!("  %{} ", w)),
+            space = if !self.operands.is_empty() { " " } else { "" },
+            operands = disas_join(&self.operands, " ")
+        )
     }
 }
 
 impl Disassemble for dr::BasicBlock {
     fn disassemble(&self) -> String {
-        let label = self.label
-                        .as_ref()
-                        .map_or(String::new(), |i| i.disassemble());
-        format!("{label}\n{insts}",
-                label = label,
-                insts = disas_join(&self.instructions, "\n"))
+        let label = self
+            .label
+            .as_ref()
+            .map_or(String::new(), |i| i.disassemble());
+        format!(
+            "{label}\n{insts}",
+            label = label,
+            insts = disas_join(&self.instructions, "\n")
+        )
     }
 }
 
@@ -104,25 +107,31 @@ impl Disassemble for dr::Function {
         let def = self.def.as_ref().map_or(String::new(), |i| i.disassemble());
         let end = self.end.as_ref().map_or(String::new(), |i| i.disassemble());
         if self.parameters.is_empty() {
-            format!("{def}\n{blocks}\n{end}",
-                    def = def,
-                    blocks = disas_join(&self.basic_blocks, "\n"),
-                    end = end)
+            format!(
+                "{def}\n{blocks}\n{end}",
+                def = def,
+                blocks = disas_join(&self.basic_blocks, "\n"),
+                end = end
+            )
         } else {
-            format!("{def}\n{params}\n{blocks}\n{end}",
-                    def = def,
-                    params = disas_join(&self.parameters, "\n"),
-                    blocks = disas_join(&self.basic_blocks, "\n"),
-                    end = end)
+            format!(
+                "{def}\n{params}\n{blocks}\n{end}",
+                def = def,
+                params = disas_join(&self.parameters, "\n"),
+                blocks = disas_join(&self.basic_blocks, "\n"),
+                end = end
+            )
         }
     }
 }
 
 /// Pushes the given value to the given container if the value is not empty.
 macro_rules! push {
-    ($container: expr, $val: expr) => (if !$val.is_empty() {
-        $container.push($val)
-    });
+    ($container: expr, $val: expr) => {
+        if !$val.is_empty() {
+            $container.push($val)
+        }
+    };
 }
 
 impl Disassemble for dr::Module {
@@ -137,22 +146,25 @@ impl Disassemble for dr::Module {
             push!(&mut text, header.disassemble());
         }
 
-        let global_insts = self.global_inst_iter()
-                               .map(|i| i.disassemble())
-                               .collect::<Vec<String>>()
-                               .join("\n");
+        let global_insts = self
+            .global_inst_iter()
+            .map(|i| i.disassemble())
+            .collect::<Vec<String>>()
+            .join("\n");
         push!(&mut text, global_insts);
 
         // TODO: Code here is essentially duplicated.
         for f in &self.functions {
-            push!(&mut text,
-                  f.def.as_ref().map_or(String::new(), |i| i.disassemble()));
+            push!(
+                &mut text,
+                f.def.as_ref().map_or(String::new(), |i| i.disassemble())
+            );
             push!(&mut text, disas_join(&f.parameters, "\n"));
             for bb in &f.basic_blocks {
-                push!(&mut text,
-                      bb.label
-                        .as_ref()
-                        .map_or(String::new(), |i| i.disassemble()));
+                push!(
+                    &mut text,
+                    bb.label.as_ref().map_or(String::new(), |i| i.disassemble())
+                );
                 for inst in &bb.instructions {
                     match inst.class.opcode {
                         spirv::Op::ExtInst => {
@@ -162,22 +174,26 @@ impl Disassemble for dr::Module {
                     }
                 }
             }
-            push!(&mut text,
-                  f.end.as_ref().map_or(String::new(), |i| i.disassemble()));
+            push!(
+                &mut text,
+                f.end.as_ref().map_or(String::new(), |i| i.disassemble())
+            );
         }
 
         text.join("\n")
     }
 }
 
-fn disas_ext_inst(inst: &dr::Instruction,
-                  ext_inst_set_tracker: &tracker::ExtInstSetTracker)
-                  -> String {
+fn disas_ext_inst(
+    inst: &dr::Instruction,
+    ext_inst_set_tracker: &tracker::ExtInstSetTracker,
+) -> String {
     if inst.operands.len() < 2 {
         return inst.disassemble();
     }
     if let (&dr::Operand::IdRef(id), &dr::Operand::LiteralExtInstInteger(opcode)) =
-           (&inst.operands[0], &inst.operands[1]) {
+        (&inst.operands[0], &inst.operands[1])
+    {
         if !ext_inst_set_tracker.have(id) {
             return inst.disassemble();
         }
@@ -185,16 +201,20 @@ fn disas_ext_inst(inst: &dr::Instruction,
             let mut operands = vec![];
             operands.push(inst.operands[0].disassemble());
             operands.push(grammar.opname.to_string());
-            for operand in &inst.operands[2..] {
+            for operand in &inst.operands[2 ..] {
                 operands.push(operand.disassemble())
             }
-            format!("{rid}{opcode}{rtype} {operands}",
-                    rid = inst.result_id
-                              .map_or(String::new(), |w| format!("%{} = ", w)),
-                    opcode = format!("Op{}", inst.class.opname),
-                    rtype = inst.result_type
-                                .map_or(String::new(), |w| format!("  %{} ", w)),
-                    operands = operands.join(" "))
+            format!(
+                "{rid}{opcode}{rtype} {operands}",
+                rid = inst
+                    .result_id
+                    .map_or(String::new(), |w| format!("%{} = ", w)),
+                opcode = format!("Op{}", inst.class.opname),
+                rtype = inst
+                    .result_type
+                    .map_or(String::new(), |w| format!("  %{} ", w)),
+                operands = operands.join(" ")
+            )
         } else {
             inst.disassemble()
         }
@@ -216,8 +236,9 @@ mod tests {
         assert_eq!("None", o.disassemble());
         let o = dr::Operand::FunctionControl(spirv::FunctionControl::INLINE);
         assert_eq!("Inline", o.disassemble());
-        let o = dr::Operand::FunctionControl(spirv::FunctionControl::INLINE |
-                                             spirv::FunctionControl::PURE);
+        let o = dr::Operand::FunctionControl(
+            spirv::FunctionControl::INLINE | spirv::FunctionControl::PURE,
+        );
         assert_eq!("Inline|Pure", o.disassemble());
         let o = dr::Operand::FunctionControl(spirv::FunctionControl::all());
         assert_eq!("Inline|DontInline|Pure|Const", o.disassemble());
@@ -231,8 +252,9 @@ mod tests {
         assert_eq!("None", o.disassemble());
         let o = dr::Operand::MemorySemantics(spirv::MemorySemantics::RELEASE);
         assert_eq!("Release", o.disassemble());
-        let o = dr::Operand::MemorySemantics(spirv::MemorySemantics::RELEASE |
-                                             spirv::MemorySemantics::WORKGROUP_MEMORY);
+        let o = dr::Operand::MemorySemantics(
+            spirv::MemorySemantics::RELEASE | spirv::MemorySemantics::WORKGROUP_MEMORY,
+        );
         assert_eq!("Release|WorkgroupMemory", o.disassemble());
     }
 
@@ -250,12 +272,14 @@ mod tests {
         let float32 = b.type_float(32);
         let voidfvoid = b.type_function(void, vec![void]);
 
-        let f = b.begin_function(void,
-                                 None,
-                                 spirv::FunctionControl::DONT_INLINE |
-                                 spirv::FunctionControl::CONST,
-                                 voidfvoid)
-                 .unwrap();
+        let f = b
+            .begin_function(
+                void,
+                None,
+                spirv::FunctionControl::DONT_INLINE | spirv::FunctionControl::CONST,
+                voidfvoid,
+            )
+            .unwrap();
         b.begin_basic_block(None).unwrap();
         let var = b.variable(float32, None, spirv::StorageClass::Function, None);
         b.ret().unwrap();
@@ -266,28 +290,30 @@ mod tests {
         b.name(f, "main");
         b.decorate(var, spirv::Decoration::RelaxedPrecision, vec![]);
 
-        assert_eq!(b.module().disassemble(),
-                   "; SPIR-V\n\
-                    ; Version: 1.3\n\
-                    ; Generator: rspirv\n\
-                    ; Bound: 8\n\
-                    OpCapability Shader\n\
-                    OpExtension \"awesome-extension\"\n\
-                    %1 = OpExtInstImport \"GLSL.std.450\"\n\
-                    OpMemoryModel Logical Simple\n\
-                    OpEntryPoint Fragment %5 \"main\"\n\
-                    OpExecutionMode %5 OriginUpperLeft\n\
-                    OpSource GLSL 450\n\
-                    OpName %5 \"main\"\n\
-                    OpDecorate %7 RelaxedPrecision\n\
-                    %2 = OpTypeVoid\n\
-                    %3 = OpTypeFloat 32\n\
-                    %4 = OpTypeFunction %2 %2\n\
-                    %5 = OpFunction  %2  DontInline|Const %4\n\
-                    %6 = OpLabel\n\
-                    %7 = OpVariable  %3  Function\n\
-                    OpReturn\n\
-                    OpFunctionEnd");
+        assert_eq!(
+            b.module().disassemble(),
+            "; SPIR-V\n\
+             ; Version: 1.3\n\
+             ; Generator: rspirv\n\
+             ; Bound: 8\n\
+             OpCapability Shader\n\
+             OpExtension \"awesome-extension\"\n\
+             %1 = OpExtInstImport \"GLSL.std.450\"\n\
+             OpMemoryModel Logical Simple\n\
+             OpEntryPoint Fragment %5 \"main\"\n\
+             OpExecutionMode %5 OriginUpperLeft\n\
+             OpSource GLSL 450\n\
+             OpName %5 \"main\"\n\
+             OpDecorate %7 RelaxedPrecision\n\
+             %2 = OpTypeVoid\n\
+             %3 = OpTypeFloat 32\n\
+             %4 = OpTypeFunction %2 %2\n\
+             %5 = OpFunction  %2  DontInline|Const %4\n\
+             %6 = OpLabel\n\
+             %7 = OpVariable  %3  Function\n\
+             OpReturn\n\
+             OpFunctionEnd"
+        );
     }
 
     #[test]
@@ -302,30 +328,34 @@ mod tests {
         let float32 = b.type_float(32);
         let voidfvoid = b.type_function(void, vec![void]);
 
-        assert!(b.begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid).is_ok());
+        assert!(b
+            .begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid)
+            .is_ok());
         b.begin_basic_block(None).unwrap();
         let var = b.variable(float32, None, spirv::StorageClass::Function, None);
         assert!(b.ext_inst(float32, None, glsl, 6, vec![var]).is_ok());
         b.ret().unwrap();
         b.end_function().unwrap();
 
-        assert_eq!(b.module().disassemble(),
-                   "; SPIR-V\n\
-                    ; Version: 1.3\n\
-                    ; Generator: rspirv\n\
-                    ; Bound: 9\n\
-                    OpCapability Shader\n\
-                    %1 = OpExtInstImport \"GLSL.std.450\"\n\
-                    OpMemoryModel Logical Simple\n\
-                    %2 = OpTypeVoid\n\
-                    %3 = OpTypeFloat 32\n\
-                    %4 = OpTypeFunction %2 %2\n\
-                    %5 = OpFunction  %2  None %4\n\
-                    %6 = OpLabel\n\
-                    %7 = OpVariable  %3  Function\n\
-                    %8 = OpExtInst  %3  %1 FSign %7\n\
-                    OpReturn\n\
-                    OpFunctionEnd");
+        assert_eq!(
+            b.module().disassemble(),
+            "; SPIR-V\n\
+             ; Version: 1.3\n\
+             ; Generator: rspirv\n\
+             ; Bound: 9\n\
+             OpCapability Shader\n\
+             %1 = OpExtInstImport \"GLSL.std.450\"\n\
+             OpMemoryModel Logical Simple\n\
+             %2 = OpTypeVoid\n\
+             %3 = OpTypeFloat 32\n\
+             %4 = OpTypeFunction %2 %2\n\
+             %5 = OpFunction  %2  None %4\n\
+             %6 = OpLabel\n\
+             %7 = OpVariable  %3  Function\n\
+             %8 = OpExtInst  %3  %1 FSign %7\n\
+             OpReturn\n\
+             OpFunctionEnd"
+        );
     }
 
     #[test]
@@ -339,28 +369,32 @@ mod tests {
         let float32 = b.type_float(32);
         let voidfvoid = b.type_function(void, vec![void]);
 
-        assert!(b.begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid).is_ok());
+        assert!(b
+            .begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid)
+            .is_ok());
         b.begin_basic_block(None).unwrap();
         let var = b.variable(float32, None, spirv::StorageClass::Function, None);
         assert!(b.ext_inst(float32, None, opencl, 15, vec![var]).is_ok());
         b.ret().unwrap();
         b.end_function().unwrap();
 
-        assert_eq!(b.module().disassemble(),
-                   "; SPIR-V\n\
-                    ; Version: 1.3\n\
-                    ; Generator: rspirv\n\
-                    ; Bound: 9\n\
-                    %1 = OpExtInstImport \"OpenCL.std\"\n\
-                    OpMemoryModel Logical OpenCL\n\
-                    %2 = OpTypeVoid\n\
-                    %3 = OpTypeFloat 32\n\
-                    %4 = OpTypeFunction %2 %2\n\
-                    %5 = OpFunction  %2  None %4\n\
-                    %6 = OpLabel\n\
-                    %7 = OpVariable  %3  Function\n\
-                    %8 = OpExtInst  %3  %1 cosh %7\n\
-                    OpReturn\n\
-                    OpFunctionEnd");
+        assert_eq!(
+            b.module().disassemble(),
+            "; SPIR-V\n\
+             ; Version: 1.3\n\
+             ; Generator: rspirv\n\
+             ; Bound: 9\n\
+             %1 = OpExtInstImport \"OpenCL.std\"\n\
+             OpMemoryModel Logical OpenCL\n\
+             %2 = OpTypeVoid\n\
+             %3 = OpTypeFloat 32\n\
+             %4 = OpTypeFunction %2 %2\n\
+             %5 = OpFunction  %2  None %4\n\
+             %6 = OpLabel\n\
+             %7 = OpVariable  %3  Function\n\
+             %8 = OpExtInst  %3  %1 cosh %7\n\
+             OpReturn\n\
+             OpFunctionEnd"
+        );
     }
 }

@@ -17,8 +17,8 @@
 use crate::dr;
 use crate::spirv;
 
-use std::result;
 use super::Error;
+use std::result;
 
 type BuildResult<T> = result::Result<T, Error>;
 
@@ -253,9 +253,11 @@ impl Builder {
         }
 
         self.basic_block.as_mut().unwrap().instructions.push(inst);
-        self.function.as_mut().unwrap().basic_blocks.push(
-            self.basic_block.take().unwrap(),
-        );
+        self.function
+            .as_mut()
+            .unwrap()
+            .basic_blocks
+            .push(self.basic_block.take().unwrap());
         Ok(())
     }
 
@@ -555,8 +557,8 @@ mod tests {
     use crate::dr;
     use crate::spirv;
 
-    use std::f32;
     use super::Builder;
+    use std::f32;
 
     use crate::binary::Disassemble;
 
@@ -564,11 +566,16 @@ mod tests {
         if !module.functions.is_empty() {
             return false;
         }
-        (module.capabilities.len() + module.extensions.len() + module.ext_inst_imports.len() +
-             module.entry_points.len() +
-             module.types_global_values.len() + module.execution_modes.len() +
-             module.debugs.len() + module.annotations.len()) +
-            (if module.memory_model.is_some() { 1 } else { 0 }) == 1
+        (module.capabilities.len()
+            + module.extensions.len()
+            + module.ext_inst_imports.len()
+            + module.entry_points.len()
+            + module.types_global_values.len()
+            + module.execution_modes.len()
+            + module.debugs.len()
+            + module.annotations.len())
+            + (if module.memory_model.is_some() { 1 } else { 0 })
+            == 1
     }
 
     #[test]
@@ -761,9 +768,9 @@ mod tests {
     fn test_forward_ref_pointer_type() {
         let mut b = Builder::new();
         let float = b.type_float(32); // 1
-        // Let builder generate
+                                      // Let builder generate
         let p1 = b.type_pointer(None, spirv::StorageClass::Input, float); // 2
-        // We supply
+                                                                          // We supply
         let pointee = b.id(); // 3
         b.type_forward_pointer(pointee, spirv::StorageClass::Output);
         let p2 = b.type_pointer(Some(pointee), spirv::StorageClass::Output, float);
@@ -827,7 +834,9 @@ mod tests {
         let c0 = b.constant_f32(float, 0.0f32);
         assert_eq!(3, c0);
 
-        let fid = b.begin_function(float, None, spirv::FunctionControl::NONE, f32ff32).unwrap();
+        let fid = b
+            .begin_function(float, None, spirv::FunctionControl::NONE, f32ff32)
+            .unwrap();
         assert_eq!(4, fid);
 
         let epid = b.begin_basic_block(None).unwrap(); // Entry block id
@@ -843,12 +852,14 @@ mod tests {
         let fr_add = b.id();
         assert_eq!(8, fr_add);
         // OpPhi can forward reference ids for both labels and results
-        let phi = b.phi(
-            float,
-            None,
-            // From above, from this, from below
-            vec![(c0, epid), (fr_add, pbid), (c0, target2)],
-        ).unwrap();
+        let phi = b
+            .phi(
+                float,
+                None,
+                // From above, from this, from below
+                vec![(c0, epid), (fr_add, pbid), (c0, target2)],
+            )
+            .unwrap();
         assert_eq!(9, phi);
         let res_add = b.f_add(float, Some(fr_add), c0, c0).unwrap();
         assert_eq!(res_add, fr_add);
@@ -865,15 +876,15 @@ mod tests {
         assert_eq!(
             m.functions.first().unwrap().disassemble(),
             "%4 = OpFunction  %1  None %2\n\
-                    %5 = OpLabel\n\
-                    OpBranch %6\n\
-                    %6 = OpLabel\n\
-                    %9 = OpPhi  %1  %3 %5 %8 %6 %3 %7\n\
-                    %8 = OpFAdd  %1  %3 %3\n\
-                    OpBranch %7\n\
-                    %7 = OpLabel\n\
-                    OpReturnValue %3\n\
-                    OpFunctionEnd"
+             %5 = OpLabel\n\
+             OpBranch %6\n\
+             %6 = OpLabel\n\
+             %9 = OpPhi  %1  %3 %5 %8 %6 %3 %7\n\
+             %8 = OpFAdd  %1  %3 %3\n\
+             OpBranch %7\n\
+             %7 = OpLabel\n\
+             OpReturnValue %3\n\
+             OpFunctionEnd"
         );
     }
 
@@ -896,7 +907,9 @@ mod tests {
         let v1 = b.variable(ifp, None, spirv::StorageClass::Input, None);
         assert_eq!(6, v1);
 
-        let f = b.begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid).unwrap();
+        let f = b
+            .begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid)
+            .unwrap();
         assert_eq!(7, f);
         let bb = b.begin_basic_block(None).unwrap();
         assert_eq!(8, bb);
@@ -913,18 +926,18 @@ mod tests {
         assert_eq!(
             b.module().disassemble(),
             "; SPIR-V\n; Version: 1.3\n; Generator: rspirv\n; Bound: 11\n\
-                    %1 = OpTypeVoid\n\
-                    %2 = OpTypeFloat 32\n\
-                    %3 = OpTypePointer Input %2\n\
-                    %4 = OpTypePointer Function %2\n\
-                    %5 = OpTypeFunction %1 %1\n\
-                    %6 = OpVariable  %3  Input\n\
-                    %10 = OpVariable  %3  Input\n\
-                    %7 = OpFunction  %1  None %5\n\
-                    %8 = OpLabel\n\
-                    %9 = OpVariable  %4  Function\n\
-                    OpReturn\n\
-                    OpFunctionEnd"
+             %1 = OpTypeVoid\n\
+             %2 = OpTypeFloat 32\n\
+             %3 = OpTypePointer Input %2\n\
+             %4 = OpTypePointer Function %2\n\
+             %5 = OpTypeFunction %1 %1\n\
+             %6 = OpVariable  %3  Input\n\
+             %10 = OpVariable  %3  Input\n\
+             %7 = OpFunction  %1  None %5\n\
+             %8 = OpLabel\n\
+             %9 = OpVariable  %4  Function\n\
+             OpReturn\n\
+             OpFunctionEnd"
         );
     }
 
@@ -943,7 +956,9 @@ mod tests {
         let v1 = b.undef(float, None);
         assert_eq!(4, v1);
 
-        let f = b.begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid).unwrap();
+        let f = b
+            .begin_function(void, None, spirv::FunctionControl::NONE, voidfvoid)
+            .unwrap();
         assert_eq!(5, f);
         let bb = b.begin_basic_block(None).unwrap();
         assert_eq!(6, bb);
@@ -960,16 +975,16 @@ mod tests {
         assert_eq!(
             b.module().disassemble(),
             "; SPIR-V\n; Version: 1.3\n; Generator: rspirv\n; Bound: 9\n\
-                    %1 = OpTypeVoid\n\
-                    %2 = OpTypeFloat 32\n\
-                    %3 = OpTypeFunction %1 %1\n\
-                    %4 = OpUndef  %2 \n\
-                    %8 = OpUndef  %2 \n\
-                    %5 = OpFunction  %1  None %3\n\
-                    %6 = OpLabel\n\
-                    %7 = OpUndef  %2 \n\
-                    OpReturn\n\
-                    OpFunctionEnd"
+             %1 = OpTypeVoid\n\
+             %2 = OpTypeFloat 32\n\
+             %3 = OpTypeFunction %1 %1\n\
+             %4 = OpUndef  %2 \n\
+             %8 = OpUndef  %2 \n\
+             %5 = OpFunction  %1  None %3\n\
+             %6 = OpLabel\n\
+             %7 = OpUndef  %2 \n\
+             OpReturn\n\
+             OpFunctionEnd"
         );
     }
 }

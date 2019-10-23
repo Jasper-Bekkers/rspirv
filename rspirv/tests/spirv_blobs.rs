@@ -23,10 +23,10 @@ fn test_external_dir(dir_path: PathBuf) {
             match path.extension() {
                 Some(ext) => {
                     if ext.to_string_lossy() != "spv" {
-                        continue
+                        continue;
                     }
                 }
-                None => continue
+                None => continue,
             }
             let spv = fs::read(path).unwrap();
             let module = dr::load_bytes(spv).unwrap();

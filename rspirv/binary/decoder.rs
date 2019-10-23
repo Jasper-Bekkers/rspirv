@@ -14,9 +14,9 @@
 
 use crate::spirv;
 
+use super::DecodeError as Error;
 use std::convert::TryInto;
 use std::result;
-use super::DecodeError as Error;
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -114,14 +114,18 @@ impl<'a> Decoder<'a> {
             Err(Error::StreamExpected(self.offset))
         } else {
             self.offset += WORD_NUM_BYTES;
-            Ok(spirv::Word::from_le_bytes(self.bytes[self.offset-4..self.offset].try_into().unwrap()))
+            Ok(spirv::Word::from_le_bytes(
+                self.bytes[self.offset - 4 .. self.offset]
+                    .try_into()
+                    .unwrap(),
+            ))
         }
     }
 
     /// Decodes and returns the next `n` raw SPIR-V words.
     pub fn words(&mut self, n: usize) -> Result<Vec<spirv::Word>> {
         let mut words = Vec::new();
-        for _ in 0..n {
+        for _ in 0 .. n {
             words.push(self.word()?);
         }
         Ok(words)
@@ -317,8 +321,10 @@ mod tests {
     fn test_decoding_unknown_execution_model() {
         let b = vec![0xef, 0xbe, 0xad, 0xde];
         let mut d = Decoder::new(&b);
-        assert_eq!(Err(Error::ExecutionModelUnknown(0, 0xdeadbeef)),
-                   d.execution_model());
+        assert_eq!(
+            Err(Error::ExecutionModelUnknown(0, 0xdeadbeef)),
+            d.execution_model()
+        );
     }
 
     #[test]
@@ -360,7 +366,7 @@ mod tests {
     #[test]
     fn test_limit() {
         let mut v = vec![];
-        for _ in 0..12 {
+        for _ in 0 .. 12 {
             v.push(0xff);
         }
         let mut d = Decoder::new(&v);

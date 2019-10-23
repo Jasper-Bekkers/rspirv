@@ -1,9 +1,9 @@
 use crate::{
     dr::ModuleHeader,
-    sr::Token,
     sr::instructions,
     sr::ops::{Op, Terminator},
-    sr::types::{Type},
+    sr::types::Type,
+    sr::Token,
 };
 use spirv;
 
@@ -15,8 +15,8 @@ pub struct EntryPoint {
 }
 
 pub struct BasicBlock {
-   pub terminator: Terminator,
-   pub ops: Vec<Op>,
+    pub terminator: Terminator,
+    pub ops: Vec<Op>,
 }
 
 pub struct Function {
@@ -49,7 +49,6 @@ pub struct Module {
     pub execution_modes: Vec<instructions::ExecutionMode>,
 
     // some missing here...
-
     /// All functions.
     pub functions: Vec<Function>,
 }
